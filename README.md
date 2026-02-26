@@ -2,10 +2,22 @@
 
 ROS 2 Humble package for grid-based Q-learning path planning with known occupancy maps.
 
+## 0) Workspace setup (for any user)
+
+Set your workspace path and package source path once per terminal:
+
+```bash
+export WS=~/my_ros2_ws
+export PKG_SRC=$WS/src/q_learning_planner
+cd $WS
+```
+
+If you cloned this repository into a different folder name, update `PKG_SRC` accordingly.
+
 ## 1) Build
 
 ```bash
-cd ~/ros2_ws
+cd $WS
 source /opt/ros/humble/setup.bash
 colcon build --packages-select q_learning_planner
 source install/setup.bash
@@ -13,7 +25,7 @@ source install/setup.bash
 
 ## Run by scenario
 
-Run these from `~/ros2_ws` after sourcing:
+Run these from `$WS` after sourcing:
 
 ```bash
 source /opt/ros/humble/setup.bash
@@ -43,14 +55,14 @@ ros2 launch q_learning_planner full_system.launch.py \
 ### 3) You changed the environment
 
 1. Edit:
-   - `src/q_learning_planner/config/environment_layout.json`
+   - `$PKG_SRC/config/environment_layout.json`
 2. Regenerate map + world from the layout:
 
 ```bash
 ros2 run q_learning_planner generate_env_assets \
-  --layout-config /home/milli/ros2_ws/src/q_learning_planner/config/environment_layout.json \
-  --output-map /home/milli/ros2_ws/src/q_learning_planner/config/generated_grid_map.json \
-  --output-world /home/milli/ros2_ws/src/q_learning_planner/worlds/q_learning_world.sdf
+  --layout-config $PKG_SRC/config/environment_layout.json \
+  --output-map $PKG_SRC/config/generated_grid_map.json \
+  --output-world $PKG_SRC/worlds/q_learning_world.sdf
 ```
 
 3. Rebuild so launch defaults in `install/` get updated:
@@ -65,8 +77,8 @@ source install/setup.bash
 ```bash
 ros2 launch q_learning_planner full_system.launch.py \
   train_rl:=true \
-  world:=/home/milli/ros2_ws/src/q_learning_planner/worlds/q_learning_world.sdf \
-  map_config_path:=/home/milli/ros2_ws/src/q_learning_planner/config/generated_grid_map.json \
+  world:=$PKG_SRC/worlds/q_learning_world.sdf \
+  map_config_path:=$PKG_SRC/config/generated_grid_map.json \
   model_path:=/tmp/q_learning_q_tables.npz
 ```
 
@@ -76,7 +88,7 @@ If you skip retraining after environment changes, planning quality may degrade b
 
 Edit:
 
-- `config/environment_layout.json`
+- `$PKG_SRC/config/environment_layout.json`
 
 This file defines:
 
@@ -88,13 +100,13 @@ This file defines:
 ## 3) Generate matching assets (map + Gazebo world)
 
 ```bash
-cd ~/ros2_ws
+cd $WS
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 ros2 run q_learning_planner generate_env_assets \
-  --layout-config /home/milli/ros2_ws/src/q_learning_planner/config/environment_layout.json \
-  --output-map /home/milli/ros2_ws/src/q_learning_planner/config/generated_grid_map.json \
-  --output-world /home/milli/ros2_ws/src/q_learning_planner/worlds/q_learning_world.sdf
+  --layout-config $PKG_SRC/config/environment_layout.json \
+  --output-map $PKG_SRC/config/generated_grid_map.json \
+  --output-world $PKG_SRC/worlds/q_learning_world.sdf
 ```
 
 Now both files are synchronized:
@@ -105,18 +117,18 @@ Now both files are synchronized:
 ## 4) Train Q-tables on generated map
 
 ```bash
-cd ~/ros2_ws
+cd $WS
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 ros2 launch q_learning_planner train_q_table.launch.py \
-  map_config_path:=/home/milli/ros2_ws/src/q_learning_planner/config/generated_grid_map.json \
+  map_config_path:=$PKG_SRC/config/generated_grid_map.json \
   output_q_table_path:=/tmp/q_learning_q_tables.npz
 ```
 
 ## 5) Run Gazebo + planner + follower + RViz
 
 ```bash
-cd ~/ros2_ws
+cd $WS
 source /opt/ros/humble/setup.bash
 source install/setup.bash
 ros2 launch q_learning_planner sim_with_planner.launch.py \
@@ -145,7 +157,7 @@ For safer RL paths (farther from obstacles), retrain with stronger clearance pen
 
 ```bash
 ros2 launch q_learning_planner train_q_table.launch.py \
-  map_config_path:=/home/milli/ros2_ws/src/q_learning_planner/config/generated_grid_map.json \
+  map_config_path:=$PKG_SRC/config/generated_grid_map.json \
   output_q_table_path:=/tmp/q_learning_q_tables.npz \
   desired_clearance_cells:=2 \
   clearance_penalty_weight:=2.0
