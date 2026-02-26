@@ -10,7 +10,7 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description() -> LaunchDescription:
     package_share = get_package_share_directory("q_learning_planner")
-    default_map_path = os.path.join(package_share, "config", "sample_grid_map.json")
+    default_map_path = os.path.join(package_share, "config", "generated_grid_map.json")
 
     return LaunchDescription(
         [
@@ -24,17 +24,19 @@ def generate_launch_description() -> LaunchDescription:
                 default_value="/tmp/q_learning_q_tables.npz",
                 description="Path where trained Q-table model will be saved.",
             ),
-            DeclareLaunchArgument("episodes_per_goal", default_value="300"),
-            DeclareLaunchArgument("max_steps_per_episode", default_value="200"),
+            DeclareLaunchArgument("episodes_per_goal", default_value="220"),
+            DeclareLaunchArgument("max_steps_per_episode", default_value="220"),
             DeclareLaunchArgument("alpha", default_value="0.2"),
             DeclareLaunchArgument("gamma", default_value="0.95"),
             DeclareLaunchArgument("epsilon_start", default_value="1.0"),
             DeclareLaunchArgument("epsilon_min", default_value="0.05"),
-            DeclareLaunchArgument("epsilon_decay", default_value="0.995"),
-            DeclareLaunchArgument("step_penalty", default_value="-0.2"),
-            DeclareLaunchArgument("obstacle_penalty", default_value="-5.0"),
-            DeclareLaunchArgument("goal_reward", default_value="100.0"),
-            DeclareLaunchArgument("distance_reward_scale", default_value="1.0"),
+            DeclareLaunchArgument("epsilon_decay", default_value="0.996"),
+            DeclareLaunchArgument("step_penalty", default_value="-0.25"),
+            DeclareLaunchArgument("obstacle_penalty", default_value="-6.0"),
+            DeclareLaunchArgument("goal_reward", default_value="120.0"),
+            DeclareLaunchArgument("distance_reward_scale", default_value="1.25"),
+            DeclareLaunchArgument("desired_clearance_cells", default_value="2"),
+            DeclareLaunchArgument("clearance_penalty_weight", default_value="2.5"),
             DeclareLaunchArgument("seed", default_value="42"),
             DeclareLaunchArgument("log_every_n_goals", default_value="10"),
             Node(
@@ -78,6 +80,14 @@ def generate_launch_description() -> LaunchDescription:
                         ),
                         "distance_reward_scale": ParameterValue(
                             LaunchConfiguration("distance_reward_scale"),
+                            value_type=float,
+                        ),
+                        "desired_clearance_cells": ParameterValue(
+                            LaunchConfiguration("desired_clearance_cells"),
+                            value_type=int,
+                        ),
+                        "clearance_penalty_weight": ParameterValue(
+                            LaunchConfiguration("clearance_penalty_weight"),
                             value_type=float,
                         ),
                         "seed": ParameterValue(

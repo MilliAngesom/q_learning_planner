@@ -15,6 +15,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob('launch/*.launch.py')),
         (os.path.join('share', package_name, 'config'), glob('config/*.json')),
+        (os.path.join('share', package_name, 'worlds'), glob('worlds/*.sdf')),
+        (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -31,6 +33,9 @@ setup(
         'console_scripts': [
             'train_q_table = q_learning_planner.train_q_table_node:main',
             'q_path_planner = q_learning_planner.path_planner_node:main',
+            'q_path_follower = q_learning_planner.path_follower_node:main',
+            'q_map_publisher = q_learning_planner.map_publisher_node:main',
+            'generate_env_assets = q_learning_planner.generate_env_assets:main',
         ],
     },
 )

@@ -1,0 +1,191 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="q_learning_world">
+    <physics name="1ms" type="ignored">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+    </physics>
+    <plugin filename="ignition-gazebo-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="ignition-gazebo-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="ignition-gazebo-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows>
+      <pose>0 0 20 0 0 0</pose>
+      <diffuse>1 1 1 1</diffuse>
+      <specular>0.3 0.3 0.3 1</specular>
+      <direction>-0.5 0.1 -0.9</direction>
+    </light>
+    <model name="ground_plane">
+      <static>true</static>
+      <link name="link">
+        <pose>6.000 6.000 0 0 0 0</pose>
+        <collision name="collision">
+          <geometry>
+            <box>
+              <size>12.000 12.000 0.05</size>
+            </box>
+          </geometry>
+        </collision>
+        <visual name="visual">
+          <geometry>
+            <box>
+              <size>12.000 12.000 0.05</size>
+            </box>
+          </geometry>
+          <material>
+            <ambient>0.8 0.8 0.8 1</ambient>
+            <diffuse>0.8 0.8 0.8 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="vehicle_blue">
+      <pose>1.250 1.250 0.00 0 0 0</pose>
+      <link name="chassis">
+        <pose>0 0 0.10 0 0 0</pose>
+        <inertial><mass>2.0</mass><inertia><ixx>0.02</ixx><iyy>0.06</iyy><izz>0.07</izz></inertia></inertial>
+        <collision name="collision"><geometry><box><size>0.35 0.24 0.10</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.35 0.24 0.10</size></box></geometry><material><ambient>0.3 0.5 1.0 1</ambient></material></visual>
+      </link>
+      <link name="left_wheel">
+        <pose>0 0.14 0.05 -1.5708 0 0</pose>
+        <inertial><mass>0.2</mass><inertia><ixx>0.0003</ixx><iyy>0.0003</iyy><izz>0.0003</izz></inertia></inertial>
+        <collision name="collision"><geometry><cylinder><radius>0.05</radius><length>0.03</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.05</radius><length>0.03</length></cylinder></geometry></visual>
+      </link>
+      <link name="right_wheel">
+        <pose>0 -0.14 0.05 -1.5708 0 0</pose>
+        <inertial><mass>0.2</mass><inertia><ixx>0.0003</ixx><iyy>0.0003</iyy><izz>0.0003</izz></inertia></inertial>
+        <collision name="collision"><geometry><cylinder><radius>0.05</radius><length>0.03</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.05</radius><length>0.03</length></cylinder></geometry></visual>
+      </link>
+      <link name="caster">
+        <pose>-0.14 0 0.03 0 0 0</pose>
+        <inertial><mass>0.1</mass><inertia><ixx>0.0001</ixx><iyy>0.0001</iyy><izz>0.0001</izz></inertia></inertial>
+        <collision name="collision"><geometry><sphere><radius>0.03</radius></sphere></geometry></collision>
+        <visual name="visual"><geometry><sphere><radius>0.03</radius></sphere></geometry></visual>
+      </link>
+      <joint name="left_wheel_joint" type="revolute"><parent>chassis</parent><child>left_wheel</child><axis><xyz>0 0 1</xyz></axis></joint>
+      <joint name="right_wheel_joint" type="revolute"><parent>chassis</parent><child>right_wheel</child><axis><xyz>0 0 1</xyz></axis></joint>
+      <joint name="caster_joint" type="ball"><parent>chassis</parent><child>caster</child></joint>
+      <plugin filename="ignition-gazebo-diff-drive-system" name="gz::sim::systems::DiffDrive">
+        <left_joint>left_wheel_joint</left_joint>
+        <right_joint>right_wheel_joint</right_joint>
+        <topic>/model/vehicle_blue/cmd_vel</topic>
+        <odom_topic>/model/vehicle_blue/odometry</odom_topic>
+        <frame_id>vehicle_blue/odom</frame_id>
+        <child_frame_id>vehicle_blue/chassis</child_frame_id>
+        <wheel_separation>0.28</wheel_separation>
+        <wheel_radius>0.05</wheel_radius>
+        <max_linear_velocity>0.7</max_linear_velocity>
+        <min_linear_velocity>-0.4</min_linear_velocity>
+        <max_angular_velocity>2.5</max_angular_velocity>
+        <min_angular_velocity>-2.5</min_angular_velocity>
+      </plugin>
+    </model>
+    <model name="obs_0_cluster_1">
+      <static>true</static>
+      <pose>3.250 3.250 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_1_cluster_2">
+      <static>true</static>
+      <pose>6.250 2.250 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_2_cluster_3">
+      <static>true</static>
+      <pose>8.750 5.250 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_3_cluster_4">
+      <static>true</static>
+      <pose>4.750 8.250 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.500 2.500 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_4_cluster_5">
+      <static>true</static>
+      <pose>2.000 9.750 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.000 2.500 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.000 2.500 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_5_cluster_6">
+      <static>true</static>
+      <pose>7.500 9.750 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.000 2.500 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.000 2.500 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_6_cluster_7">
+      <static>true</static>
+      <pose>10.250 8.500 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.500 2.000 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.500 2.000 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+    <model name="obs_7_cluster_8">
+      <static>true</static>
+      <pose>10.500 2.750 0.400 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box>
+          <size>1.000 1.500 0.800</size>
+        </box></geometry></collision>
+        <visual name="visual"><geometry><box>
+          <size>1.000 1.500 0.800</size>
+        </box></geometry>
+        <material><ambient>0.7 0.2 0.2 1</ambient></material></visual>
+      </link>
+    </model>
+  </world>
+</sdf>

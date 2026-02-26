@@ -15,17 +15,19 @@ class QTableTrainerNode(Node):
 
         self.declare_parameter("map_config_path", "")
         self.declare_parameter("output_q_table_path", "/tmp/q_learning_q_tables.npz")
-        self.declare_parameter("episodes_per_goal", 400)
-        self.declare_parameter("max_steps_per_episode", 200)
+        self.declare_parameter("episodes_per_goal", 220)
+        self.declare_parameter("max_steps_per_episode", 220)
         self.declare_parameter("alpha", 0.2)
         self.declare_parameter("gamma", 0.95)
         self.declare_parameter("epsilon_start", 1.0)
         self.declare_parameter("epsilon_min", 0.05)
-        self.declare_parameter("epsilon_decay", 0.995)
-        self.declare_parameter("step_penalty", -0.2)
-        self.declare_parameter("obstacle_penalty", -5.0)
-        self.declare_parameter("goal_reward", 100.0)
-        self.declare_parameter("distance_reward_scale", 1.0)
+        self.declare_parameter("epsilon_decay", 0.996)
+        self.declare_parameter("step_penalty", -0.25)
+        self.declare_parameter("obstacle_penalty", -6.0)
+        self.declare_parameter("goal_reward", 120.0)
+        self.declare_parameter("distance_reward_scale", 1.25)
+        self.declare_parameter("desired_clearance_cells", 2)
+        self.declare_parameter("clearance_penalty_weight", 2.5)
         self.declare_parameter("seed", 42)
         self.declare_parameter("log_every_n_goals", 10)
 
@@ -53,6 +55,12 @@ class QTableTrainerNode(Node):
             goal_reward=float(self.get_parameter("goal_reward").value),
             distance_reward_scale=float(
                 self.get_parameter("distance_reward_scale").value
+            ),
+            desired_clearance_cells=max(
+                0, int(self.get_parameter("desired_clearance_cells").value)
+            ),
+            clearance_penalty_weight=max(
+                0.0, float(self.get_parameter("clearance_penalty_weight").value)
             ),
         )
 
@@ -94,6 +102,9 @@ def main(args=None) -> None:
     node = QTableTrainerNode()
     try:
         node.run()
+    except KeyboardInterrupt:
+        pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()

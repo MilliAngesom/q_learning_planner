@@ -1,0 +1,20 @@
+{
+  "resolution": 0.5,
+  "origin": [0.0, 0.0],
+  "world_size": [12.0, 12.0],
+  "robot_start": {
+    "x": 1.25,
+    "y": 1.25
+  },
+  "obstacle_height": 0.8,
+  "obstacles": [
+    { "name": "cluster_1", "x": 3.25, "y": 3.25, "size_x": 1.5, "size_y": 2.5 },
+    { "name": "cluster_2", "x": 6.25, "y": 2.25, "size_x": 1.5, "size_y": 2.5 },
+    { "name": "cluster_3", "x": 8.75, "y": 5.25, "size_x": 1.5, "size_y": 2.5 },
+    { "name": "cluster_4", "x": 4.75, "y": 8.25, "size_x": 1.5, "size_y": 2.5 },
+    { "name": "cluster_5", "x": 2.00, "y": 9.75, "size_x": 1.0, "size_y": 2.5 },
+    { "name": "cluster_6", "x": 7.50, "y": 9.75, "size_x": 1.0, "size_y": 2.5 },
+    { "name": "cluster_7", "x": 10.25, "y": 8.50, "size_x": 1.5, "size_y": 2.0 },
+    { "name": "cluster_8", "x": 10.50, "y": 2.75, "size_x": 1.0, "size_y": 1.5 }
+  ]
+}
