@@ -5,9 +5,10 @@ ROS 2 Humble package for grid-based Q-learning path planning with known occupanc
 ## 0) Workspace setup (for any user)
 
 Set your workspace path and package source path once per terminal:
+Open your terminal and navigate to your ROS2 workspace using `cd`.
 
 ```bash
-export WS=~/my_ros2_ws
+export WS=$(pwd)
 export PKG_SRC=$WS/src/q_learning_planner
 cd $WS
 ```
@@ -123,6 +124,35 @@ source install/setup.bash
 ros2 launch q_learning_planner train_q_table.launch.py \
   map_config_path:=$PKG_SRC/config/generated_grid_map.json \
   output_q_table_path:=/tmp/q_learning_q_tables.npz
+```
+
+This now also saves per-episode training history to a companion file by default:
+
+- `/tmp/q_learning_q_tables.training_history.npz`
+
+You can override that path with `output_training_history_path:=/your/path/training_history.npz`.
+
+## 4b) Plot full training curves from an actual run
+
+```bash
+cd $WS
+source /opt/ros/humble/setup.bash
+source install/setup.bash
+ros2 run q_learning_planner plot_training_history \
+  /tmp/q_learning_q_tables.training_history.npz \
+  --window 200 \
+  --goal-boundaries
+```
+
+This opens an interactive Matplotlib window with full per-episode reward, steps, success-rate, and epsilon curves from the saved run history.
+
+If you also want a PNG:
+
+```bash
+ros2 run q_learning_planner plot_training_history \
+  /tmp/q_learning_q_tables.training_history.npz \
+  --output /tmp/q_learning_training_curves.png \
+  --no-show
 ```
 
 ## 5) Run Gazebo + planner + follower + RViz
