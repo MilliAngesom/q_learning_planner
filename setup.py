@@ -18,7 +18,7 @@ setup(
         (os.path.join('share', package_name, 'worlds'), glob('worlds/*.sdf')),
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'numpy', 'matplotlib'],
     zip_safe=True,
     maintainer='milli',
     maintainer_email='million.asefaw@uqtr.ca',
@@ -32,6 +32,7 @@ setup(
     entry_points={
         'console_scripts': [
             'train_q_table = q_learning_planner.train_q_table_node:main',
+            'plot_training_history = q_learning_planner.plot_training_history:main',
             'q_path_planner = q_learning_planner.path_planner_node:main',
             'q_path_follower = q_learning_planner.path_follower_node:main',
             'q_map_publisher = q_learning_planner.map_publisher_node:main',
