@@ -17,6 +17,7 @@ ACTION_DELTAS: Tuple[Cell, ...] = (
 )
 
 ProgressCallback = Optional[Callable[[int, int, float], None]]
+EpisodeCallback = Optional[Callable[["TrainingEpisodeMetrics"], None]]
 
 
 @dataclass
@@ -32,6 +33,114 @@ class QLearningConfig:
     distance_reward_scale: float = 1.0
     desired_clearance_cells: int = 3
     clearance_penalty_weight: float = 4.0
+
+
+@dataclass
+class TrainingEpisodeMetrics:
+    goal_index: int
+    goal_cell: Cell
+    episode_index: int
+    global_episode_index: int
+    epsilon: float
+    success: bool
+    steps: int
+    total_reward: float
+
+
+@dataclass
+class TrainingHistory:
+    goal_indices: np.ndarray
+    goal_cells: np.ndarray
+    episode_indices: np.ndarray
+    global_episode_indices: np.ndarray
+    epsilons: np.ndarray
+    successes: np.ndarray
+    steps: np.ndarray
+    total_rewards: np.ndarray
+    episodes_per_goal: int
+    max_steps_per_episode: int
+    seed: int
+    total_goals: int
+
+    @property
+    def episode_count(self) -> int:
+        return int(self.global_episode_indices.size)
+
+    @classmethod
+    def from_records(
+        cls,
+        records: List[TrainingEpisodeMetrics],
+        episodes_per_goal: int,
+        max_steps_per_episode: int,
+        seed: int,
+        total_goals: int,
+    ) -> "TrainingHistory":
+        if not records:
+            empty_int = np.array([], dtype=np.int32)
+            empty_float = np.array([], dtype=np.float32)
+            empty_bool = np.array([], dtype=bool)
+            return cls(
+                goal_indices=empty_int,
+                goal_cells=np.empty((0, 2), dtype=np.int32),
+                episode_indices=empty_int,
+                global_episode_indices=empty_int,
+                epsilons=empty_float,
+                successes=empty_bool,
+                steps=empty_int,
+                total_rewards=empty_float,
+                episodes_per_goal=episodes_per_goal,
+                max_steps_per_episode=max_steps_per_episode,
+                seed=seed,
+                total_goals=total_goals,
+            )
+
+        return cls(
+            goal_indices=np.array(
+                [record.goal_index for record in records], dtype=np.int32
+            ),
+            goal_cells=np.array(
+                [record.goal_cell for record in records], dtype=np.int32
+            ),
+            episode_indices=np.array(
+                [record.episode_index for record in records], dtype=np.int32
+            ),
+            global_episode_indices=np.array(
+                [record.global_episode_index for record in records], dtype=np.int32
+            ),
+            epsilons=np.array(
+                [record.epsilon for record in records], dtype=np.float32
+            ),
+            successes=np.array([record.success for record in records], dtype=bool),
+            steps=np.array([record.steps for record in records], dtype=np.int32),
+            total_rewards=np.array(
+                [record.total_reward for record in records], dtype=np.float32
+            ),
+            episodes_per_goal=episodes_per_goal,
+            max_steps_per_episode=max_steps_per_episode,
+            seed=seed,
+            total_goals=total_goals,
+        )
+
+    def save(self, output_path: str | Path) -> None:
+        output = Path(output_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(
+            output,
+            goal_indices=self.goal_indices.astype(np.int32),
+            goal_cells=self.goal_cells.astype(np.int32),
+            episode_indices=self.episode_indices.astype(np.int32),
+            global_episode_indices=self.global_episode_indices.astype(np.int32),
+            epsilons=self.epsilons.astype(np.float32),
+            successes=self.successes.astype(bool),
+            steps=self.steps.astype(np.int32),
+            total_rewards=self.total_rewards.astype(np.float32),
+            episodes_per_goal=np.array([self.episodes_per_goal], dtype=np.int32),
+            max_steps_per_episode=np.array(
+                [self.max_steps_per_episode], dtype=np.int32
+            ),
+            seed=np.array([self.seed], dtype=np.int32),
+            total_goals=np.array([self.total_goals], dtype=np.int32),
+        )
 
 
 @dataclass
@@ -80,6 +189,28 @@ def load_q_table_model(model_path: str | Path) -> QTableModel:
     return QTableModel(grid_map=grid_map, q_tables=q_tables, free_cells=free_cells)
 
 
+def load_training_history(history_path: str | Path) -> TrainingHistory:
+    history_file = Path(history_path)
+    if not history_file.exists():
+        raise FileNotFoundError(f"Training history not found: {history_file}")
+
+    loaded = np.load(history_file, allow_pickle=False)
+    return TrainingHistory(
+        goal_indices=loaded["goal_indices"].astype(np.int32),
+        goal_cells=loaded["goal_cells"].astype(np.int32),
+        episode_indices=loaded["episode_indices"].astype(np.int32),
+        global_episode_indices=loaded["global_episode_indices"].astype(np.int32),
+        epsilons=loaded["epsilons"].astype(np.float32),
+        successes=loaded["successes"].astype(bool),
+        steps=loaded["steps"].astype(np.int32),
+        total_rewards=loaded["total_rewards"].astype(np.float32),
+        episodes_per_goal=int(loaded["episodes_per_goal"][0]),
+        max_steps_per_episode=int(loaded["max_steps_per_episode"][0]),
+        seed=int(loaded["seed"][0]),
+        total_goals=int(loaded["total_goals"][0]),
+    )
+
+
 @dataclass
 class PlanningResult:
     path: List[Cell]
@@ -98,6 +229,7 @@ class QLearningTrainer:
         max_steps_per_episode: int,
         rng_seed: int,
         progress_callback: ProgressCallback = None,
+        episode_callback: EpisodeCallback = None,
     ) -> QTableModel:
         free_cells = self._grid_map.free_cells()
         if len(free_cells) < 2:
@@ -110,24 +242,34 @@ class QLearningTrainer:
             (total_goals, total_states, total_actions), dtype=np.float32
         )
         rng = np.random.default_rng(rng_seed)
+        global_episode_index = 0
 
         for goal_index, goal_cell in enumerate(free_cells):
             q_table = q_tables[goal_index]
             epsilon = self._config.epsilon_start
             success_count = 0
 
-            for _ in range(episodes_per_goal):
+            for episode_index in range(episodes_per_goal):
                 start_cell = goal_cell
                 while start_cell == goal_cell:
                     random_index = int(rng.integers(0, len(free_cells)))
                     start_cell = free_cells[random_index]
 
+                episode_epsilon = epsilon
                 current_cell = start_cell
-                for _ in range(max_steps_per_episode):
+                total_reward = 0.0
+                steps_taken = 0
+                succeeded = False
+
+                for step_index in range(max_steps_per_episode):
                     current_state = self._grid_map.cell_to_state(current_cell)
                     action = self._select_action(q_table, current_state, epsilon, rng)
-                    next_cell, reward, done = self._step(current_cell, action, goal_cell)
+                    next_cell, reward, done = self._step(
+                        current_cell, action, goal_cell
+                    )
                     next_state = self._grid_map.cell_to_state(next_cell)
+                    total_reward += reward
+                    steps_taken = step_index + 1
 
                     next_value = 0.0 if done else float(np.max(q_table[next_state]))
                     td_target = reward + self._config.gamma * next_value
@@ -137,9 +279,27 @@ class QLearningTrainer:
                     current_cell = next_cell
                     if done:
                         success_count += 1
+                        succeeded = True
                         break
 
-                epsilon = max(self._config.epsilon_min, epsilon * self._config.epsilon_decay)
+                global_episode_index += 1
+                if episode_callback is not None:
+                    episode_callback(
+                        TrainingEpisodeMetrics(
+                            goal_index=goal_index,
+                            goal_cell=goal_cell,
+                            episode_index=episode_index,
+                            global_episode_index=global_episode_index,
+                            epsilon=float(episode_epsilon),
+                            success=succeeded,
+                            steps=steps_taken,
+                            total_reward=float(total_reward),
+                        )
+                    )
+
+                epsilon = max(
+                    self._config.epsilon_min, epsilon * self._config.epsilon_decay
+                )
 
             if progress_callback is not None:
                 success_rate = success_count / float(episodes_per_goal)

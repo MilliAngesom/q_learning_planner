@@ -37,6 +37,9 @@ def generate_launch_description() -> LaunchDescription:
             {
                 "map_config_path": LaunchConfiguration("map_config_path"),
                 "output_q_table_path": LaunchConfiguration("model_path"),
+                "output_training_history_path": LaunchConfiguration(
+                    "output_training_history_path"
+                ),
                 "episodes_per_goal": ParameterValue(
                     LaunchConfiguration("episodes_per_goal"), value_type=int
                 ),
@@ -122,6 +125,14 @@ def generate_launch_description() -> LaunchDescription:
                 "model_path",
                 default_value="/tmp/q_learning_q_tables.npz",
                 description="Q-table output path (training) and input path (planner).",
+            ),
+            DeclareLaunchArgument(
+                "output_training_history_path",
+                default_value="",
+                description=(
+                    "Optional path for saved per-episode training history. "
+                    "Defaults to a companion file next to model_path."
+                ),
             ),
             DeclareLaunchArgument("rviz", default_value="true"),
             DeclareLaunchArgument("episodes_per_goal", default_value="220"),

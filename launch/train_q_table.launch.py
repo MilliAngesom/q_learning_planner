@@ -24,6 +24,14 @@ def generate_launch_description() -> LaunchDescription:
                 default_value="/tmp/q_learning_q_tables.npz",
                 description="Path where trained Q-table model will be saved.",
             ),
+            DeclareLaunchArgument(
+                "output_training_history_path",
+                default_value="",
+                description=(
+                    "Optional path for saved per-episode training history. "
+                    "Defaults to a companion file next to the Q-table output."
+                ),
+            ),
             DeclareLaunchArgument("episodes_per_goal", default_value="220"),
             DeclareLaunchArgument("max_steps_per_episode", default_value="220"),
             DeclareLaunchArgument("alpha", default_value="0.2"),
@@ -46,7 +54,12 @@ def generate_launch_description() -> LaunchDescription:
                 parameters=[
                     {
                         "map_config_path": LaunchConfiguration("map_config_path"),
-                        "output_q_table_path": LaunchConfiguration("output_q_table_path"),
+                        "output_q_table_path": LaunchConfiguration(
+                            "output_q_table_path"
+                        ),
+                        "output_training_history_path": LaunchConfiguration(
+                            "output_training_history_path"
+                        ),
                         "episodes_per_goal": ParameterValue(
                             LaunchConfiguration("episodes_per_goal"), value_type=int
                         ),
